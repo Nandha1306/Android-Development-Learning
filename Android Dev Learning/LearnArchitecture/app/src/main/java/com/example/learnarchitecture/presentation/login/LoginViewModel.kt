@@ -6,10 +6,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.learnarchitecture.data.repository.AuthRepositoryImpl
 import com.example.learnarchitecture.domain.usecase.LoginUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
+import androidx.hilt.navigation.compose.hiltViewModel
 
-class LoginViewModel : ViewModel() {
-    private val repository = AuthRepositoryImpl()
-    private val loginUseCase = LoginUseCase(repository)
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val loginUseCase: LoginUseCase
+) : ViewModel() {
     var uiState by mutableStateOf(LoginUiState())
         private set
 
@@ -25,14 +29,18 @@ class LoginViewModel : ViewModel() {
 //        println("Email: '${uiState.email}'")
 //        println("Password: '${uiState.password}'")
 
-        val success = loginUseCase(uiState.email, uiState.password)
+        val success = loginUseCase(
+            uiState.email,
+            uiState.password
+        )
 
 //        println("Success: $success")
 
         uiState = uiState.copy(
-            message = if (success) "Login Successful"
-            else "Invalid Credentials"
+            message = if (success)
+                "Login Successful"
+            else
+                "Invalid Credentials"
         )
     }
-
 }
