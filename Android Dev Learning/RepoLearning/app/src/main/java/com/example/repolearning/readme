@@ -1,0 +1,361 @@
+# Repository Pattern Practice
+
+This project is a simple Book application built using **Jetpack Compose**, **ViewModel**, and the **Repository Pattern**.
+
+The goal is to understand how the Repository Pattern separates the UI from the data source and provides a clean architecture that is easy to maintain and test.
+
+This is the same architecture that will later be used in DriveOps for handling API calls through repositories instead of accessing network services directly from the ViewModel.
+
+---
+
+# Objective
+
+Learn:
+
+* What a Repository is
+* Why repositories are useful
+* How to separate data access from UI logic
+* How the ViewModel communicates with the Repository
+* How interfaces improve flexibility
+* How this architecture prepares applications for Retrofit and Dependency Injection
+
+---
+
+# Project Structure
+
+```text
+app
+│
+├── MainActivity.kt
+├── model
+│   └── Book.kt
+├── data
+│   ├── FakeBookApi.kt
+│   ├── BookRepository.kt
+│   └── BookRepositoryImpl.kt
+└── ui
+    ├── BookViewModel.kt
+    └── BookScreen.kt
+```
+
+---
+
+# Application Flow
+
+```text
+MainActivity
+      │
+      ▼
+BookScreen
+      │
+      ▼
+BookViewModel
+      │
+      ▼
+BookRepository
+      │
+      ▼
+BookRepositoryImpl
+      │
+      ▼
+FakeBookApi
+      │
+      ▼
+Returns Book List
+      │
+      ▼
+Compose displays books
+```
+
+---
+
+# File Responsibilities
+
+## MainActivity
+
+```kotlin
+val api = FakeBookApi()
+val repository = BookRepositoryImpl(api)
+val viewModel = BookViewModel(repository)
+
+setContent {
+    BookScreen(viewModel)
+}
+```
+
+### Role
+
+* Entry point of the application.
+* Creates the required dependencies.
+* Passes the ViewModel to the Compose UI.
+* Does not contain business logic.
+
+---
+
+## BookScreen
+
+```kotlin
+val books by viewModel.books.collectAsState()
+```
+
+### Role
+
+* Displays the list of books.
+* Observes the ViewModel state.
+* Does not fetch data directly.
+* Automatically updates when the state changes.
+
+---
+
+## BookViewModel
+
+```kotlin
+class BookViewModel(
+    private val repository: BookRepository
+) : ViewModel()
+```
+
+### Role
+
+* Requests data from the repository.
+* Stores UI state.
+* Exposes read-only state to the UI.
+* Does not know where the data comes from.
+
+---
+
+## BookRepository
+
+```kotlin
+interface BookRepository
+```
+
+### Role
+
+* Defines the contract for fetching books.
+* Hides the implementation details from the ViewModel.
+* Makes it easy to swap data sources.
+
+---
+
+## BookRepositoryImpl
+
+```kotlin
+class BookRepositoryImpl(
+    private val api: FakeBookApi
+)
+```
+
+### Role
+
+* Implements the repository interface.
+* Retrieves data from the API.
+* Returns the result to the ViewModel.
+
+---
+
+## FakeBookApi
+
+```kotlin
+class FakeBookApi
+```
+
+### Role
+
+* Simulates a backend service.
+* Returns hardcoded book data.
+* Will later be replaced with Retrofit.
+
+---
+
+# Execution Flow
+
+## Step 1
+
+Application starts.
+
+↓
+
+MainActivity creates:
+
+* FakeBookApi
+* BookRepositoryImpl
+* BookViewModel
+
+---
+
+## Step 2
+
+BookScreen observes
+
+```kotlin
+viewModel.books
+```
+
+Initially,
+
+```text
+[]
+```
+
+---
+
+## Step 3
+
+BookViewModel initializes.
+
+↓
+
+Calls
+
+```kotlin
+loadBooks()
+```
+
+---
+
+## Step 4
+
+ViewModel requests data.
+
+```kotlin
+repository.getBooks()
+```
+
+---
+
+## Step 5
+
+Repository delegates the request.
+
+```kotlin
+api.getBooks()
+```
+
+---
+
+## Step 6
+
+FakeBookApi returns
+
+```text
+Clean Code
+```
+
+---
+
+## Step 7
+
+Repository returns the data to the ViewModel.
+
+↓
+
+ViewModel updates its state.
+
+↓
+
+Compose observes the updated state.
+
+↓
+
+UI recomposes automatically.
+
+---
+
+# Complete Flow Diagram
+
+```text
+App Starts
+      │
+      ▼
+MainActivity
+      │
+      ▼
+BookViewModel
+      │
+      ▼
+BookRepository
+      │
+      ▼
+BookRepositoryImpl
+      │
+      ▼
+FakeBookApi
+      │
+      ▼
+Book List Returned
+      │
+      ▼
+State Updated
+      │
+      ▼
+Compose observes state
+      │
+      ▼
+Books Displayed
+```
+
+---
+
+# Architecture
+
+```text
+             User
+               │
+               ▼
+          BookScreen
+               │
+               ▼
+        BookViewModel
+               │
+               ▼
+      BookRepository
+               │
+               ▼
+   BookRepositoryImpl
+               │
+               ▼
+        FakeBookApi
+               │
+               ▼
+        Book Data Source
+```
+
+---
+
+# Why Use the Repository Pattern?
+
+Without a Repository:
+
+```text
+ViewModel
+      │
+      ▼
+FakeBookApi
+```
+
+The ViewModel depends directly on the data source.
+
+With a Repository:
+
+```text
+ViewModel
+      │
+      ▼
+Repository
+      │
+      ▼
+API / Database / Cache
+```
+
+The ViewModel only knows about the Repository, making it easier to replace or combine data sources without changing the ViewModel.
+
+---
+
+# Key Takeaways
+
+* The ViewModel should not access APIs directly.
+* A Repository acts as the single source of data for the ViewModel.
+* Interfaces make implementations interchangeable.
+* Business logic remains separate from UI logic.
+* The Repository Pattern improves
